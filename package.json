@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "main": "app.js",
   "dependencies": {
+    "@types/d3-voronoi": "^1.1.7",
+    "d3-voronoi": "^1.1.2",
     "http-server": "^0.10.0",
     "paper": "^0.11.5",
     "ts-loader": "^3.2.0",

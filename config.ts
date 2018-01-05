@@ -12,21 +12,13 @@ export const config:GameConfig = {
         file: 'dist/spiral.bot.js'
       },
       {
-        name: 'artemis',
-        file: 'dist/artemis.bot.js'
+        name: 'rrt',
+        file: 'dist/rrt.bot.js'
       },
-      {
-        name: 'spiral',
-        file: 'dist/spiral.bot.js'
-      },
-      {
-        name: 'artemis',
-        file: 'dist/artemis.bot.js'
-      },
-      {
-        name: 'spiral',
-        file: 'dist/spiral.bot.js'
-      },
+      // {
+      //   name: 'voronoi',
+      //   file: 'dist/voronoi.bot.js'
+      // },
     ]
   },
   visuals: {

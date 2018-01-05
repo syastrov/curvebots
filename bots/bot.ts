@@ -7,6 +7,7 @@ declare const paper: typeof Paper;
 paper.install(this);
 
 export abstract class Bot {
+  curvesGroup: Paper.Group;
   debugLayer: Paper.Layer;
   playerId: number;
   curvePainters: { [playerId: number]: CurvePainter };
@@ -36,6 +37,10 @@ export abstract class Bot {
           for (const curve of e.data.curves) {
             if (!(curve.id in this.curvePainters)) {
               this.curvePainters[curve.id] = new CurvePainter(paper, curve.id, new paper.Color('#fff'));
+              if (!this.curvesGroup) {
+                this.curvesGroup = new paper.Group();
+              }
+              this.curvesGroup.addChild(this.curvePainters[curve.id].path);
             }
             let curvePainter: CurvePainter = this.curvePainters[curve.id];
             curvePainter.playbackRecordedData(curve.updates);
