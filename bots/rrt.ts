@@ -422,9 +422,9 @@ class RRTBot extends Bot {
       const nextPos = new data.paper.Point(nextConf.x, nextConf.y);
       const circle = new data.paper.Path.Circle({ center: nextPos, radius: 2, parent: this.debugLayer });
       // TODO: Somehow, determine whether the angle changes too much, and ignore it.
-      console.log(180 * nextConf.angle / Math.PI, data.direction.deg);
       const angleToNext = 180 * nextConf.angle / Math.PI - data.direction.deg;
-      if (Math.abs(angleToNext) < 0) {
+      console.log(angleToNext);
+      if (Math.abs(angleToNext) < 0.05) {
         command = 0;
       } else
         if (angleToNext > 0) {
