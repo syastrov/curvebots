@@ -4,7 +4,9 @@
   "main": "app.js",
   "dependencies": {
     "@types/d3-voronoi": "^1.1.7",
+    "@types/es6-shim": "^0.31.35",
     "d3-voronoi": "^1.1.2",
+    "es6-shim": "^0.35.3",
     "http-server": "^0.10.0",
     "paper": "^0.11.5",
     "ts-loader": "^3.2.0",
