@@ -27,7 +27,7 @@ import { CurvePainter } from '../shared';
 
 interface DijkstraResult<T> {
   dist: Map<T, number>;
-  prev: Map<T, T|null>;
+  prev: Map<T, T | null>;
 }
 
 class Graph<T> {
@@ -65,7 +65,7 @@ class Graph<T> {
 
     // Set distance to 0 for initial, and infinity for all other nodes
     let dist = new Map<T, number>();
-    let prev = new Map<T, T|null>();
+    let prev = new Map<T, T | null>();
     for (const node of nodes) {
       dist.set(node, Infinity);
       prev.set(node, null);
@@ -79,9 +79,9 @@ class Graph<T> {
     const findNodeWithMinDistance = (unvisited: Set<T>) => {
       // Inefficient
       let minDist = Infinity;
-      let minNode: T|null = null;
-      
-      const unvisitedIterable = unvisited.keys(); 
+      let minNode: T | null = null;
+
+      const unvisitedIterable = unvisited.keys();
       let iter;
       while (iter = unvisitedIterable.next(), !iter.done) {
         const n = <T>iter.value;
@@ -116,7 +116,7 @@ class Graph<T> {
       currentNode = <T>findNodeWithMinDistance(unvisited);// node in unvisited with min dist[currentNode]; 
     }
 
-    return {dist: dist, prev: prev};
+    return { dist: dist, prev: prev };
   }
 }
 
@@ -345,8 +345,13 @@ class RRT {
 }
 
 class RRTBot extends Bot {
+  counter: number;
+  path: Array<Conf>;
+  paperPath: Paper.Path
   constructor() {
     super();
+    this.counter = 0;
+    this.path = [];
   }
   update(id: number, data: {
     paper: typeof Paper,
@@ -358,56 +363,76 @@ class RRTBot extends Bot {
     let command: curveCommand = 0;
     let params: RRTParams = {
       reachedGoalDistanceThreshold: 50,
-      delta_t: 10,
+      delta_t: 9,
       speed: 1,
       turningRadius: 30,
       useRungeKutta: false
     };
-    let rrt = new RRT(params, data.paper, this.curvesGroup);
-    const G = rrt.generate_rrt(
-      new Conf(data.pos.x, data.pos.y, data.direction.rad),
-      100
-    );
-    const initialNode = G.getNodes()[0];
-    let result = G.dijkstra(initialNode);
-    let iterable = result.dist.entries();
-    let iter = iterable.next();
-    let maxDist = 0;
-    let farthestNode: Conf | null = null;
-    while (!iter.done) {
-      let [conf, dist] = iter.value;
-      if (dist >= maxDist) {
-        maxDist = dist;
-        farthestNode = conf;
-      }
-      iter = iterable.next();
+
+    this.counter++;
+
+    if (this.counter % 1 === 0) {
+      this.counter = 0;
+      this.path = [];
     }
 
-    if (farthestNode) {
-      // Walk back to build a path
-      let path: Conf[] = [];
-      let curNode: Conf|null|undefined = farthestNode;
-      do {
-        path.push(curNode);
-        curNode = result.prev.get(curNode);
-      } while (curNode);
-      console.log(path);
+    if (!this.path.length) {
+      let rrt = new RRT(params, data.paper, this.curvesGroup);
+      const G = rrt.generate_rrt(
+        new Conf(data.pos.x, data.pos.y, data.direction.rad),
+        200
+      );
+      const initialNode = G.getNodes()[0];
+      let result = G.dijkstra(initialNode);
+      let iterable = result.dist.entries();
+      let iter = iterable.next();
+      let maxDist = 0;
+      let farthestNode: Conf | null = null;
+      while (!iter.done) {
+        let [conf, dist] = iter.value;
+        if (dist >= maxDist) {
+          maxDist = dist;
+          farthestNode = conf;
+        }
+        iter = iterable.next();
+      }
 
-      const nextConf = path[0];
+
+      if (farthestNode) {
+        // Walk back to build a path
+        let curNode: Conf | null | undefined = farthestNode;
+        do {
+          this.path.push(curNode);
+          curNode = result.prev.get(curNode);
+        } while (curNode);
+        this.path.reverse();
+        console.log(this.path);
+        this.paperPath = new data.paper.Path(this.path.map(p => [p.x, p.y]));
+      }
+    }
+
+    this.paperPath.strokeColor = '#fff';
+    this.paperPath.parent = this.debugLayer;
+
+
+
+    // Try to turn towards the next configuration in the path.
+    if (this.path.length >= 2) {
+      const nextConf = this.path[1];
       const nextPos = new data.paper.Point(nextConf.x, nextConf.y);
-      const angleToNext = data.pos.getDirectedAngle(nextPos);
-      if (Math.abs(angleToNext) < 10) {
+      const circle = new data.paper.Path.Circle({ center: nextPos, radius: 2, parent: this.debugLayer });
+      // TODO: Somehow, determine whether the angle changes too much, and ignore it.
+      console.log(180 * nextConf.angle / Math.PI, data.direction.deg);
+      const angleToNext = 180 * nextConf.angle / Math.PI - data.direction.deg;
+      if (Math.abs(angleToNext) < 0) {
         command = 0;
-      } else if (angleToNext > 0) {
-        command = 1;
-      } else {
-        command = -1;
-      }
-
+      } else
+        if (angleToNext > 0) {
+          command = 1;
+        } else {
+          command = -1;
+        }
     }
-
-    
-    console.log(G);
 
     this.sendPaintMessage(data.paper.project);
     this.sendCommand(id, command);
